@@ -1,111 +1,138 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lead Hunter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="container">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Lead Hunter</p>
-          <h1>Captador de Clientes</h1>
+        <div class="brand">
+          <div class="logo-icon">🎯</div>
+          <div>
+            <p class="eyebrow">Lead Hunter</p>
+            <h1>Captador de Clientes</h1>
+          </div>
         </div>
-        <span class="status-badge">Live</span>
+        <div class="header-actions">
+          <span class="status-badge">● Live</span>
+        </div>
       </header>
 
       <section class="summary-grid" id="summary-grid">
         <div class="summary-card">
-          <span>Total</span>
-          <strong id="total-count">0</strong>
+          <div class="summary-content">
+            <span>Total</span>
+            <strong id="total-count">0</strong>
+          </div>
+          <div class="summary-icon">📊</div>
         </div>
         <div class="summary-card accent-blue">
-          <span>New</span>
-          <strong id="new-count">0</strong>
+          <div class="summary-content">
+            <span>Nuevos</span>
+            <strong id="new-count">0</strong>
+          </div>
+          <div class="summary-icon">✨</div>
         </div>
         <div class="summary-card accent-gold">
-          <span>Contacted</span>
-          <strong id="contacted-count">0</strong>
+          <div class="summary-content">
+            <span>Contactados</span>
+            <strong id="contacted-count">0</strong>
+          </div>
+          <div class="summary-icon">📞</div>
         </div>
         <div class="summary-card accent-green">
-          <span>Qualified</span>
-          <strong id="qualified-count">0</strong>
+          <div class="summary-content">
+            <span>Calificados</span>
+            <strong id="qualified-count">0</strong>
+          </div>
+          <div class="summary-icon">✅</div>
         </div>
         <div class="summary-card accent-emerald">
-          <span>Won</span>
-          <strong id="won-count">0</strong>
+          <div class="summary-content">
+            <span>Ganados</span>
+            <strong id="won-count">0</strong>
+          </div>
+          <div class="summary-icon">🏆</div>
         </div>
       </section>
 
       <main class="layout">
         <section class="card form-card">
-          <h2>Nuevo Lead</h2>
+          <div class="card-header">
+            <h2>Capturar Lead</h2>
+            <p class="card-description">Agrega un nuevo prospecto a tu pipeline</p>
+          </div>
           <form id="lead-form">
             <div class="grid two-columns">
-              <label>
-                Nombre
-                <input type="text" id="name" name="name" required />
-              </label>
-              <label>
-                Email
-                <input type="email" id="email" name="email" required />
-              </label>
+              <div class="form-group">
+                <label for="name">Nombre completo *</label>
+                <input type="text" id="name" name="name" placeholder="Ej: Juan Pérez" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" placeholder="Ej: juan@empresa.com" required />
+              </div>
             </div>
 
             <div class="grid two-columns">
-              <label>
-                Teléfono
-                <input type="tel" id="phone" name="phone" />
-              </label>
-              <label>
-                Empresa
-                <input type="text" id="company" name="company" />
-              </label>
+              <div class="form-group">
+                <label for="phone">Teléfono</label>
+                <input type="tel" id="phone" name="phone" placeholder="Ej: +34 612 345 678" />
+              </div>
+              <div class="form-group">
+                <label for="company">Empresa</label>
+                <input type="text" id="company" name="company" placeholder="Ej: Acme Corp" />
+              </div>
             </div>
 
             <div class="grid two-columns">
-              <label>
-                Fuente
+              <div class="form-group">
+                <label for="source">Fuente</label>
                 <select id="source" name="source">
-                  <option value="Website">Website</option>
-                  <option value="LinkedIn">LinkedIn</option>
-                  <option value="Referral">Referral</option>
-                  <option value="Cold Call">Cold Call</option>
-                  <option value="Social Media">Social Media</option>
+                  <option value="Website">📍 Website</option>
+                  <option value="LinkedIn">💼 LinkedIn</option>
+                  <option value="Referral">🤝 Referencia</option>
+                  <option value="Cold Call">☎️ Cold Call</option>
+                  <option value="Social Media">📱 Social Media</option>
                 </select>
-              </label>
+              </div>
 
-              <label>
-                Estado
+              <div class="form-group">
+                <label for="status">Estado</label>
                 <select id="status" name="status">
-                  <option value="New">Nuevo</option>
-                  <option value="Contacted">Contactado</option>
-                  <option value="Qualified">Calificado</option>
-                  <option value="Won">Ganado</option>
-                  <option value="Lost">Perdido</option>
+                  <option value="New">✨ Nuevo</option>
+                  <option value="Contacted">📞 Contactado</option>
+                  <option value="Qualified">✅ Calificado</option>
+                  <option value="Won">🏆 Ganado</option>
+                  <option value="Lost">❌ Perdido</option>
                 </select>
-              </label>
+              </div>
             </div>
 
-            <label>
-              Notas
-              <textarea id="notes" name="notes" rows="4" placeholder="Detalles del lead..."></textarea>
-            </label>
+            <div class="form-group">
+              <label for="notes">Notas</label>
+              <textarea id="notes" name="notes" rows="4" placeholder="Agrega detalles importantes del lead..."></textarea>
+            </div>
 
-            <button type="submit" class="primary-btn">Guardar lead</button>
+            <button type="submit" class="primary-btn">+ Guardar Lead</button>
           </form>
         </section>
 
         <section class="card list-card">
-          <div class="list-header">
-            <h2>Leads capturados</h2>
-            <button id="refresh-btn" class="secondary-btn" type="button">Actualizar</button>
+          <div class="card-header">
+            <h2>Pipeline de Leads</h2>
+            <p class="card-description">Gestiona tus prospectos</p>
           </div>
 
           <div class="toolbar">
-            <input id="search-input" type="search" placeholder="Buscar por nombre, email o empresa" />
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input id="search-input" type="search" placeholder="Buscar por nombre, email, empresa..." />
+            </div>
             <select id="status-filter">
               <option value="all">Todos</option>
               <option value="New">Nuevos</option>
@@ -114,6 +141,7 @@
               <option value="Won">Ganados</option>
               <option value="Lost">Perdidos</option>
             </select>
+            <button id="refresh-btn" class="secondary-btn" type="button">🔄 Actualizar</button>
           </div>
 
           <div class="table-wrap">
@@ -125,6 +153,7 @@
                   <th>Empresa</th>
                   <th>Fuente</th>
                   <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="lead-table-body"></tbody>
@@ -132,6 +161,14 @@
           </div>
         </section>
       </main>
+    </div>
+
+    <!-- Modal para detalles del lead -->
+    <div id="lead-modal" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <div id="modal-body"></div>
+      </div>
     </div>
 
     <script src="app.js"></script>

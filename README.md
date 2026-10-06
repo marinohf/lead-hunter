@@ -1,38 +1,59 @@
 # Lead Hunter
 
-Lead Hunter is a lightweight lead capture and CRM-style dashboard focused on collecting and tracking customer prospects.
+Lead Hunter es una herramienta ligera pero potente para capturar y gestionar leads con una interfaz premium y capacidades de integración con WhatsApp.
 
-## Features
+## ✨ Características
 
-- Capture new leads from a simple web form
-- Store leads locally in JSON for fast iteration
-- View a list of all captured leads in a clean dashboard
-- Filter leads by status and search by name, email, or company
-- Surface summary stats for total, new, contacted, qualified, and won leads
+- 📝 Capturar nuevos leads desde un formulario intuitivo
+- 📊 Dashboard con estadísticas en tiempo real
+- 🔍 Búsqueda y filtrado avanzado por estado
+- 📱 Integración con WhatsApp Business API
+- 💾 Almacenamiento local en JSON (fácil de migrar a BD)
+- 🎨 Interfaz premium con gradientes y efectos visuales
+- 📈 Pipeline de leads con estados personalizables
+- ⚡ Rendimiento rápido y responsive
 
-## Tech Stack
+## 🚀 Tech Stack
 
-- Node.js
-- Express
+- Node.js + Express
 - Vanilla JavaScript + HTML + CSS
+- WhatsApp Business API (opcional)
+- JSON storage (base de datos)
 
-## Local development
+## 📦 Instalación
 
-1. Install dependencies:
+1. Clona o descarga el repositorio
+2. Instala dependencias:
 
    ```bash
    npm install
    ```
 
-2. Start the application:
+3. (Opcional) Configura WhatsApp Business API:
+
+   ```bash
+   export WHATSAPP_TOKEN="tu_token_aqui"
+   export WHATSAPP_PHONE_ID="tu_phone_id_aqui"
+   ```
+
+4. Inicia la aplicación:
 
    ```bash
    npm start
    ```
 
-3. Open http://localhost:3000
+5. Abre http://localhost:3000
 
-## Project structure
+## 📱 Configuración de WhatsApp
+
+Para habilitar el envío de mensajes por WhatsApp:
+
+1. Crea una app en [Meta for Developers](https://developers.facebook.com)
+2. Configura WhatsApp Business API
+3. Obtén tu token y phone ID
+4. Establece las variables de entorno `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_ID`
+
+## 📁 Estructura del Proyecto
 
 ```text
 .
@@ -48,6 +69,29 @@ Lead Hunter is a lightweight lead capture and CRM-style dashboard focused on col
 └── server.js
 ```
 
-## Notes
+## 🔌 API Endpoints
 
-This repository is intentionally simple and ready for extension. You can add authentication, a database, analytics, or a real CRM integration later.
+### Leads
+- `GET /api/leads` - Listar leads (con filtros)
+- `GET /api/leads/:id` - Obtener un lead
+- `POST /api/leads` - Crear nuevo lead
+- `PATCH /api/leads/:id` - Actualizar lead
+- `POST /api/leads/:id/send-whatsapp` - Enviar mensaje por WhatsApp
+
+### Stats
+- `GET /api/stats` - Obtener estadísticas
+- `GET /api/config` - Obtener configuración
+
+## 🎯 Próximas Mejoras
+
+- [ ] Migración a base de datos (PostgreSQL/SQLite)
+- [ ] Autenticación y multi-usuario
+- [ ] Exportar leads a CSV/Excel
+- [ ] Integración con Zapier/Make
+- [ ] Plantillas de mensajes personalizables
+- [ ] Análisis y reportes
+- [ ] Webhook para formularios externos
+
+## 📄 Licencia
+
+MIT
