@@ -161,9 +161,78 @@
           </div>
         </section>
       </main>
+
+      <section class="card prospecting-card">
+        <div class="card-header">
+          <h2>Prospección activa</h2>
+          <p class="card-description">Describe el tipo de empresa o persona que quieres encontrar y el motor la busca automáticamente.</p>
+        </div>
+
+        <div class="engine-tags">
+          <span>Lead Sources Engine</span>
+          <span>Criteria Engine</span>
+          <span>Scoring Engine</span>
+          <span>Pipeline Classifier</span>
+        </div>
+
+        <form id="prospecting-form" class="prospecting-form">
+          <div class="grid two-columns">
+            <div class="form-group">
+              <label for="prospecting-objective">Qué buscas</label>
+              <textarea id="prospecting-objective" rows="4" placeholder="Ej: buffets de abogados en la provincia de alicante sin web"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="prospecting-location">Ubicación</label>
+              <input id="prospecting-location" type="text" placeholder="Ej: Alicante, Santander..." />
+            </div>
+          </div>
+
+          <div class="grid three-columns">
+            <div class="form-group">
+              <label for="prospecting-source">Fuente principal</label>
+              <select id="prospecting-source">
+                <option value="Google Maps">Google Maps</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Web Search">Web Search</option>
+                <option value="Directorio local">Directorio local</option>
+                <option value="Mixed">Mixto</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prospecting-max-results">Máximo resultados</label>
+              <select id="prospecting-max-results">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prospecting-min-score">Score mínimo</label>
+              <select id="prospecting-min-score">
+                <option value="55">55</option>
+                <option value="65" selected>65</option>
+                <option value="75">75</option>
+                <option value="85">85</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="primary-btn">🚀 Buscar leads</button>
+        </form>
+
+        <div class="prospecting-results">
+          <div class="results-header">
+            <h3>Resultados descubiertos</h3>
+            <button id="refresh-prospecting" class="secondary-btn" type="button">🔄 Actualizar</button>
+          </div>
+          <div id="prospecting-results-list" class="result-list"></div>
+        </div>
+      </section>
     </div>
 
-    <!-- Modal para detalles del lead -->
     <div id="lead-modal" class="modal hidden">
       <div class="modal-content">
         <button class="modal-close">&times;</button>

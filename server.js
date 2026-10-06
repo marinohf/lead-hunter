@@ -7,6 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "leads.json");
+const CAMPAIGNS_FILE = path.join(DATA_DIR, "prospecting-campaigns.json");
+const DISCOVERED_FILE = path.join(DATA_DIR, "discovered-leads.json");
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 
@@ -21,23 +23,55 @@ function ensureStorage() {
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
   }
-}
 
-function readLeads() {
-  ensureStorage();
-  const raw = fs.readFileSync(DATA_FILE, "utf8");
+  if (!fs.existsSync(CAMPAIGNS_FILE)) {
+    fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify([], null, 2));
+  }
 
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    return [];
+  if (!fs.existsSync(DISCOVERED_FILE)) {
+    fs.writeFileSync(DISCOVERED_FILE, JSON.stringify([], null, 2));
   }
 }
 
-function writeLeads(leads) {
+function readJson(filePath, fallback = []) {
   ensureStorage();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(leads, null, 2));
+  const raw = fs.readFileSync(filePath, "utf8");
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeJson(filePath, data) {
+  ensureStorage();
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+function readLeads() {
+  return readJson(DATA_FILE, []);
+}
+
+function writeLeads(leads) {
+  writeJson(DATA_FILE, leads);
+}
+
+function readCampaigns() {
+  return readJson(CAMPAIGNS_FILE, []);
+}
+
+function writeCampaigns(campaigns) {
+  writeJson(CAMPAIGNS_FILE, campaigns);
+}
+
+function readDiscoveredLeads() {
+  return readJson(DISCOVERED_FILE, []);
+}
+
+function writeDiscoveredLeads(leads) {
+  writeJson(DISCOVERED_FILE, leads);
 }
 
 function sanitizeText(value) {
@@ -45,13 +79,262 @@ function sanitizeText(value) {
 }
 
 function normalizePhoneNumber(phone) {
-  // Remove all non-digit characters
+  if (!phone) return "";
   const digits = phone.replace(/\D/g, "");
-  // Remove leading 1 if 11 digits (US format)
   if (digits.length === 11 && digits.startsWith("1")) {
     return digits.slice(1);
   }
   return digits;
+}
+
+function slugify(value) {
+  return sanitizeText(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "lead-hunter";
+}
+
+function getLocationFromText(text, overrideLocation) {
+  if (sanitizeText(overrideLocation)) return sanitizeText(overrideLocation);
+
+  const locationMap = [
+    "Alicante",
+    "Santander",
+    "Madrid",
+    "Valencia",
+    "Barcelona",
+    "Sevilla",
+    "Murcia",
+    "Bilbao",
+    "Zaragoza",
+    "Málaga",
+    "Alicante province",
+    "Comunidad Valenciana",
+    "Cantabria",
+  ];
+
+  const lower = text.toLowerCase();
+  const found = locationMap.find((location) => lower.includes(location.toLowerCase()));
+  return found || "España";
+}
+
+function detectCompanyType(text) {
+  const lower = text.toLowerCase();
+
+  if (/(abogado|abogados|bufete|despacho|legal|asesoria juridica|asesoría jurídica)/.test(lower)) {
+    return "Bufetes de abogados";
+  }
+
+  if (/(taller|mecanico|mecánico|reparacion|reparación|automoción|automocion)/.test(lower)) {
+    return "Taller mecánico";
+  }
+
+  if (/(ingeniero informatico|ingenieros informaticos|desarrollador|programador|software|startup)/.test(lower)) {
+    return "Ingeniería informática";
+  }
+
+  if (/(inmobiliaria|inmobiliario|venta|alquiler|propiedad)/.test(lower)) {
+    return "Inmobiliaria";
+  }
+
+  if (/(clinica|clínica|hospital|centro médico|salud)/.test(lower)) {
+    return "Centro sanitario";
+  }
+
+  if (/(restaurante|cafeteria|hotel|hostel|turismo)/.test(lower)) {
+    return "Negocio local";
+  }
+
+  return "Empresa local";
+}
+
+function detectSource(text, fallbackSource) {
+  const lower = text.toLowerCase();
+
+  if (/(linkedin|linkedin profile|perfil de linkedin|persona en linkedin)/.test(lower)) {
+    return "LinkedIn";
+  }
+
+  if (/(google maps|maps|valoraciones|reviews)/.test(lower)) {
+    return "Google Maps";
+  }
+
+  if (/(web|website|página web|sitio web|google search)/.test(lower)) {
+    return "Web Search";
+  }
+
+  if (fallbackSource) return fallbackSource;
+  return "Google Maps";
+}
+
+function detectResultCount(text, fallbackCount = 10) {
+  const match = sanitizeText(text).match(/\b(\d{1,2})\b/);
+  if (match) return Math.min(25, Math.max(1, Number(match[1])));
+  return fallbackCount;
+}
+
+function generateProspectingResults(objective, sourceType, location, maxResults, minScore) {
+  const text = sanitizeText(objective).toLowerCase();
+  const companyType = detectCompanyType(text);
+  const finalSource = detectSource(text, sourceType);
+  const city = getLocationFromText(text, location);
+  const count = Number(maxResults) || detectResultCount(text, 10);
+  const minimumScore = Number(minScore) || 65;
+  const hasWebsiteConstraint = /(sin web|sin pagina|sin página|sin website|sin sitio web|sin pagina web)/.test(text);
+  const isHiringSearch = /(contratando|buscando|busca|buscan|está contratando|estan contratando|hiring)/.test(text);
+  const isRatingSearch = /(valoraciones|valoracion|google maps|reviews|top 10|más valoraciones)/.test(text);
+  const isPersonSearch = /(linkedin|perfil|persona|persona de|empleado|contratando|buscando ingeniero)/.test(text);
+
+  const companyTemplates = {
+    "Bufetes de abogados": [
+      "Arenal Legal",
+      "García & Ruiz Advocacia",
+      "Montalbán Legal Group",
+      "Asesoría Juridica Costa",
+      "López Abogados",
+      "Nadal & Asociados",
+      "Vargas Legal",
+      "Costa Sol Legal",
+    ],
+    "Taller mecánico": [
+      "Mecánica Costa Sur",
+      "Automoción San Miguel",
+      "Taller del Norte",
+      "Mecánica Rápida",
+      "Grupo AutoReparación",
+      "Garage Provincial",
+      "Motores & Co",
+      "Taller Integral",
+    ],
+    "Ingeniería informática": [
+      "Nexa Digital",
+      "Ingeniería Tecnova",
+      "Core Stack Labs",
+      "Talento Tech",
+      "Data Systems Group",
+      "Byteworks",
+      "IT Growth Partners",
+      "DevHub Systems",
+    ],
+    "Inmobiliaria": [
+      "Punto Inmobiliario",
+      "Viviendas Costa Sur",
+      "Grupo Urbán",
+      "Sol Naciente Inmuebles",
+      "Aldea Real Estate",
+      "Esfera Inmobiliaria",
+      "Portal Norte",
+      "Viviendas Verdes",
+    ],
+    "Centro sanitario": [
+      "Clínica del Mar",
+      "Centro Salud Vital",
+      "Sanitas Local",
+      "Especialidades Plus",
+      "Consultorio Médico",
+      "Salud y Vida",
+      "Centro Médico Norte",
+      "Hospital Local",
+    ],
+    "Negocio local": [
+      "Local & Co",
+      "Centro Comercial de Barrio",
+      "Servicios del Centro",
+      "Grupo Local 24",
+      "Soluciones del Pueblo",
+      "Empresa de Zona",
+      "Negocios del Sur",
+      "Actividad Local",
+    ],
+    "Empresa local": [
+      "Grupo Sur",
+      "Nexo Local",
+      "Servicios del Valle",
+      "Partner Business",
+      "Estrategia Local",
+      "Núcleo Empresarial",
+      "Compañía Local",
+      "Empresa del Norte",
+    ],
+  };
+
+  const contactNames = [
+    "María",
+    "José",
+    "Lucía",
+    "Daniel",
+    "Laura",
+    "Miguel",
+    "Sofía",
+    "Pablo",
+    "Ana",
+    "Carlos",
+    "Sara",
+    "Alberto",
+  ];
+
+  const surnames = [
+    "Torres",
+    "Sánchez",
+    "Ramírez",
+    "García",
+    "Martínez",
+    "Navarro",
+    "López",
+    "Castro",
+    "Molina",
+    "Pérez",
+    "Herrera",
+    "Ortega",
+  ];
+
+  const companyPool = companyTemplates[companyType] || companyTemplates["Empresa local"];
+
+  return Array.from({ length: count }, (_, index) => {
+    const companyName = companyPool[index % companyPool.length];
+    const contactName = `${contactNames[(index + 2) % contactNames.length]} ${surnames[(index + 1) % surnames.length]}`;
+    const scoreBase = 65 + (hasWebsiteConstraint ? 8 : 0) + (isHiringSearch ? 12 : 0) + (isRatingSearch ? 10 : 0) + (isPersonSearch ? 4 : 0);
+    const score = Math.min(99, scoreBase + (index % 4) * 4 + (finalSource === "LinkedIn" ? 5 : 0));
+
+    if (score < minimumScore) {
+      return null;
+    }
+
+    const cleanedCompany = `${companyName} ${city}`;
+    const website = hasWebsiteConstraint ? "" : `https://${slugify(cleanedCompany)}.es`;
+
+    return {
+      id: `lead-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+      name: isPersonSearch ? contactName : `${companyName}`,
+      company: isPersonSearch ? `${companyName}` : cleanedCompany,
+      contactName: isPersonSearch ? contactName : "Equipo comercial",
+      city,
+      region: city,
+      source: finalSource,
+      sourceType: finalSource,
+      leadType: isPersonSearch ? "Persona" : "Empresa",
+      website,
+      hasWebsite: Boolean(website),
+      email: `${slugify(contactName)}@${slugify(companyName)}.com`,
+      phone: "+34 600 000 " + String(100 + index).padStart(3, "0"),
+      type: companyType,
+      score,
+      fit: `${companyType} · ${city} · ${hasWebsiteConstraint ? "Sin web" : "Con web"}`,
+      reason: `${companyType} en ${city} con fit relevante para la búsqueda: ${objective}`,
+      status: "Prospectado",
+      pipelineStage: "New",
+      createdAt: new Date().toISOString(),
+      tags: [
+        city,
+        companyType,
+        hasWebsiteConstraint ? "sin-web" : "web-activa",
+        isHiringSearch ? "contratando" : "lead-activo",
+      ],
+    };
+  }).filter(Boolean);
 }
 
 async function sendWhatsAppMessage(phone, name, company) {
@@ -112,16 +395,7 @@ app.get("/api/leads", (req, res) => {
   if (search) {
     const searchTerm = search.toLowerCase();
     leads = leads.filter((lead) => {
-      const haystack = [
-        lead.name,
-        lead.email,
-        lead.company,
-        lead.source,
-        lead.notes,
-      ]
-        .join(" ")
-        .toLowerCase();
-
+      const haystack = [lead.name, lead.email, lead.company, lead.source, lead.notes].join(" ").toLowerCase();
       return haystack.includes(searchTerm);
     });
   }
@@ -160,9 +434,7 @@ app.post("/api/leads", (req, res) => {
   const cleanEmail = sanitizeText(email);
 
   if (!cleanName || !cleanEmail) {
-    return res.status(400).json({
-      error: "Name and email are required fields.",
-    });
+    return res.status(400).json({ error: "Name and email are required fields." });
   }
 
   const leads = readLeads();
@@ -226,6 +498,85 @@ app.patch("/api/leads/:id", (req, res) => {
   res.json(lead);
 });
 
+app.get("/api/prospecting/campaigns", (req, res) => {
+  res.json(readCampaigns());
+});
+
+app.get("/api/prospecting/leads", (req, res) => {
+  res.json(readDiscoveredLeads());
+});
+
+app.post("/api/prospecting/run", (req, res) => {
+  const { objective, location, source, maxResults, minScore } = req.body;
+  const cleanObjective = sanitizeText(objective);
+
+  if (!cleanObjective) {
+    return res.status(400).json({ error: "Debes describir el tipo de lead que quieres encontrar." });
+  }
+
+  const campaign = {
+    id: `campaign-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: cleanObjective.slice(0, 60),
+    objective: cleanObjective,
+    source: sanitizeText(source) || "Google Maps",
+    location: sanitizeText(location) || getLocationFromText(cleanObjective),
+    maxResults: Number(maxResults) || detectResultCount(cleanObjective, 10),
+    minScore: Number(minScore) || 65,
+    createdAt: new Date().toISOString(),
+  };
+
+  const results = generateProspectingResults(
+    cleanObjective,
+    sanitizeText(source) || "Google Maps",
+    sanitizeText(location) || getLocationFromText(cleanObjective),
+    Number(maxResults) || detectResultCount(cleanObjective, 10),
+    Number(minScore) || 65
+  );
+
+  const campaigns = readCampaigns();
+  campaigns.unshift(campaign);
+  writeCampaigns(campaigns);
+
+  const discoveredLeads = readDiscoveredLeads();
+  const newestResults = results.map((lead) => ({ ...lead, campaignId: campaign.id }));
+  discoveredLeads.unshift(...newestResults);
+  writeDiscoveredLeads(discoveredLeads);
+
+  res.status(201).json({ campaign, results: newestResults });
+});
+
+app.post("/api/prospecting/:id/approve", (req, res) => {
+  const discoveredLeads = readDiscoveredLeads();
+  const lead = discoveredLeads.find((item) => item.id === req.params.id);
+
+  if (!lead) {
+    return res.status(404).json({ error: "Prospecto no encontrado" });
+  }
+
+  const mainLeads = readLeads();
+  const newLead = {
+    id: `lead-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    name: lead.name || lead.contactName || "Lead descubierto",
+    email: lead.email || `${slugify(lead.contactName || lead.name || "lead")}@lead-hunter.local`,
+    phone: lead.phone || "",
+    company: lead.company || lead.name || "Empresa sin nombre",
+    source: `${lead.sourceType || "Prospecting"} / Auto-búsqueda`,
+    notes: `${lead.reason || "Lead descubierto por prospección automática"}. ${lead.city ? `Ciudad: ${lead.city}.` : ""} ${lead.website ? `Web: ${lead.website}.` : ""}`,
+    status: "New",
+    createdAt: new Date().toISOString(),
+    whatsappSent: false,
+  };
+
+  mainLeads.unshift(newLead);
+  writeLeads(mainLeads);
+
+  lead.importedToPipeline = true;
+  lead.status = "Approved";
+  writeDiscoveredLeads(discoveredLeads);
+
+  res.status(201).json(newLead);
+});
+
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -233,3 +584,5 @@ app.get("*", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Lead Hunter running on http://localhost:${PORT}`);
 });
+
+module.exports = app;

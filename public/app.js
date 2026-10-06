@@ -89,9 +89,7 @@ async function openLeadModal(leadId) {
 function renderLeadModal(lead) {
   const modalBody = document.getElementById("modal-body");
   const createdDate = new Date(lead.createdAt).toLocaleDateString("es-ES");
-  const whatsappStatus = lead.whatsappSent
-    ? `✅ Enviado el ${new Date(lead.whatsappSentAt).toLocaleDateString("es-ES")}`
-    : "No enviado";
+  const whatsappStatus = lead.whatsappSent ? `✅ Enviado el ${new Date(lead.whatsappSentAt).toLocaleDateString("es-ES")}` : "No enviado";
 
   modalBody.innerHTML = `
     <div class="lead-detail">
@@ -247,7 +245,114 @@ async function submitLead(event) {
   }
 }
 
+async function loadProspectingLeads() {
+  try {
+    const response = await fetch("/api/prospecting/leads");
+    const leads = await response.json();
+    renderProspectingResults(leads);
+  } catch (error) {
+    console.error("Failed to load prospecting leads:", error);
+  }
+}
+
+function renderProspectingResults(leads) {
+  const container = document.getElementById("prospecting-results-list");
+
+  if (!leads.length) {
+    container.innerHTML = '<div class="empty-state">Aún no hay resultados. Describe un criterio para lanzar la búsqueda automática.</div>';
+    return;
+  }
+
+  container.innerHTML = leads
+    .map(
+      (lead) => `
+        <div class="result-item">
+          <div class="result-header">
+            <div>
+              <strong>${lead.company || lead.name}</strong>
+              <p>${lead.contactName || lead.name} · ${lead.city || "Sin ubicación"} · ${lead.source || "Búsqueda automática"}</p>
+            </div>
+            <span class="score-badge">${lead.score || 0}/100</span>
+          </div>
+
+          <div class="result-meta">
+            <span>${lead.type || "Empresa local"}</span>
+            <span>${lead.leadType || "Empresa"}</span>
+            <span>${lead.hasWebsite ? "Web activa" : "Sin web"}</span>
+          </div>
+
+          <div class="result-notes">${lead.reason || "Lead generado por la prospección activa"}</div>
+
+          <button class="secondary-btn approve-btn" type="button" data-id="${lead.id}">Importar al pipeline</button>
+        </div>
+      `
+    )
+    .join("");
+}
+
+async function runProspecting(event) {
+  event.preventDefault();
+
+  const objective = document.getElementById("prospecting-objective").value.trim();
+  if (!objective) {
+    alert("Describe el tipo de lead que quieres encontrar.");
+    return;
+  }
+
+  const payload = {
+    objective,
+    location: document.getElementById("prospecting-location").value.trim(),
+    source: document.getElementById("prospecting-source").value,
+    maxResults: Number(document.getElementById("prospecting-max-results").value),
+    minScore: Number(document.getElementById("prospecting-min-score").value),
+  };
+
+  try {
+    const response = await fetch("/api/prospecting/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "No se pudo lanzar la búsqueda automática");
+    }
+
+    renderProspectingResults(data.results || []);
+    await loadStats();
+    await loadLeads();
+  } catch (error) {
+    console.error("Prospecting error:", error);
+    alert(error.message || "No se pudo ejecutar la búsqueda automática.");
+  }
+}
+
+async function approveProspect(leadId) {
+  try {
+    const response = await fetch(`/api/prospecting/${leadId}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const lead = await response.json();
+    if (!response.ok) {
+      throw new Error(lead.error || "No se pudo importar el lead al pipeline");
+    }
+
+    alert(`✅ Lead importado al pipeline: ${lead.company || lead.name}`);
+    await loadStats();
+    await loadLeads();
+    await loadProspectingLeads();
+  } catch (error) {
+    console.error("Approve prospect error:", error);
+    alert(error.message || "No se pudo importar al pipeline.");
+  }
+}
+
 // Event listeners
+
 document.getElementById("lead-form").addEventListener("submit", submitLead);
 document.getElementById("refresh-btn").addEventListener("click", async () => {
   await loadStats();
@@ -261,7 +366,17 @@ document.getElementById("lead-modal").addEventListener("click", (e) => {
   if (e.target.id === "lead-modal") closeModal();
 });
 
+document.getElementById("prospecting-form").addEventListener("submit", runProspecting);
+document.getElementById("refresh-prospecting").addEventListener("click", loadProspectingLeads);
+document.addEventListener("click", (event) => {
+  const approveButton = event.target.closest(".approve-btn");
+  if (approveButton) {
+    approveProspect(approveButton.dataset.id);
+  }
+});
+
 // Initialize
 initConfig();
 loadStats();
 loadLeads();
+loadProspectingLeads();
