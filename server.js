@@ -15,34 +15,34 @@ const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Inicializar almacenamiento con verificación de permisos
+// Sistema robusto de almacenamiento con auto-sincronización
 function ensureStorage() {
   try {
     // Crear directorio si no existe
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o755 });
-      console.log(`✅ Data directory created: ${DATA_DIR}`);
+      console.log(`✅ Carpeta de datos creada: ${DATA_DIR}`);
     }
 
     // Crear archivo de leads si no existe
     if (!fs.existsSync(DATA_FILE)) {
       fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
-      console.log(`✅ Leads file created: ${DATA_FILE}`);
+      console.log(`✅ Archivo 'leads.json' creado`);
     }
 
     // Crear archivo de campañas si no existe
     if (!fs.existsSync(CAMPAIGNS_FILE)) {
       fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
-      console.log(`✅ Campaigns file created: ${CAMPAIGNS_FILE}`);
+      console.log(`✅ Archivo 'prospecting-campaigns.json' creado`);
     }
 
     // Crear archivo de leads descubiertos si no existe
     if (!fs.existsSync(DISCOVERED_FILE)) {
       fs.writeFileSync(DISCOVERED_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
-      console.log(`✅ Discovered leads file created: ${DISCOVERED_FILE}`);
+      console.log(`✅ Archivo 'discovered-leads.json' creado`);
     }
   } catch (error) {
-    console.error(`❌ Error ensuring storage:`, error.message);
+    console.error(`❌ Error inicializando almacenamiento:`, error.message);
   }
 }
 
@@ -56,7 +56,7 @@ function readJson(filePath, fallback = []) {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : fallback;
   } catch (error) {
-    console.error(`❌ Error reading ${filePath}:`, error.message);
+    console.error(`❌ Error leyendo ${path.basename(filePath)}:`, error.message);
     return fallback;
   }
 }
@@ -64,10 +64,11 @@ function readJson(filePath, fallback = []) {
 function writeJson(filePath, data) {
   try {
     ensureStorage();
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), { mode: 0o644 });
-    console.log(`✅ Data saved to ${path.basename(filePath)}`);
+    const json = JSON.stringify(data, null, 2);
+    fs.writeFileSync(filePath, json, { mode: 0o644 });
+    console.log(`💾 Datos guardados en ${path.basename(filePath)} (${data.length} registros)`);
   } catch (error) {
-    console.error(`❌ Error writing to ${filePath}:`, error.message);
+    console.error(`❌ Error guardando en ${path.basename(filePath)}:`, error.message);
   }
 }
 
@@ -395,7 +396,7 @@ async function sendWhatsAppMessage(phone, name, company) {
   }
 }
 
-// Rutas API
+// ============= RUTAS API =============
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, message: "Lead Hunter is running" });
@@ -565,6 +566,8 @@ app.post("/api/prospecting/run", (req, res) => {
   discoveredLeads.unshift(...newestResults);
   writeDiscoveredLeads(discoveredLeads);
 
+  console.log(`🎯 Búsqueda completada: ${results.length} leads encontrados para "${cleanObjective}"`);
+
   res.status(201).json({ campaign, results: newestResults });
 });
 
@@ -597,19 +600,43 @@ app.post("/api/prospecting/:id/approve", (req, res) => {
   lead.status = "Approved";
   writeDiscoveredLeads(discoveredLeads);
 
+  console.log(`✅ Lead importado al pipeline: ${newLead.company}`);
+
   res.status(201).json(newLead);
+});
+
+app.delete("/api/leads/:id", (req, res) => {
+  const leads = readLeads();
+  const index = leads.findIndex((l) => l.id === req.params.id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: "Lead not found" });
+  }
+
+  const deletedLead = leads.splice(index, 1)[0];
+  writeLeads(leads);
+
+  console.log(`🗑️ Lead eliminado: ${deletedLead.name}`);
+
+  res.json({ success: true, message: "Lead deleted", lead: deletedLead });
 });
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Inicializar almacenamiento al arrancar
+// ============= INICIALIZACIÓN =============
+
 ensureStorage();
 
 app.listen(PORT, () => {
-  console.log(`\n🎯 Lead Hunter running on http://localhost:${PORT}\n`);
-  console.log(`📁 Data directory: ${DATA_DIR}\n`);
+  console.log("\n" + "=".repeat(50));
+  console.log("🎯 LEAD HUNTER - MOTOR DE PROSPECCIÓN ACTIVA");
+  console.log("=".repeat(50));
+  console.log(`\n🌐 URL: http://localhost:${PORT}`);
+  console.log(`📁 Datos: ${DATA_DIR}`);
+  console.log(`\n✅ Servidor listo. Abre http://localhost:${PORT} en tu navegador\n`);
+  console.log("=".repeat(50) + "\n");
 });
 
 module.exports = app;
