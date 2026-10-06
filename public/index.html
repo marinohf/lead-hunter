@@ -16,6 +16,29 @@
         <span class="status-badge">Live</span>
       </header>
 
+      <section class="summary-grid" id="summary-grid">
+        <div class="summary-card">
+          <span>Total</span>
+          <strong id="total-count">0</strong>
+        </div>
+        <div class="summary-card accent-blue">
+          <span>New</span>
+          <strong id="new-count">0</strong>
+        </div>
+        <div class="summary-card accent-gold">
+          <span>Contacted</span>
+          <strong id="contacted-count">0</strong>
+        </div>
+        <div class="summary-card accent-green">
+          <span>Qualified</span>
+          <strong id="qualified-count">0</strong>
+        </div>
+        <div class="summary-card accent-emerald">
+          <span>Won</span>
+          <strong id="won-count">0</strong>
+        </div>
+      </section>
+
       <main class="layout">
         <section class="card form-card">
           <h2>Nuevo Lead</h2>
@@ -79,6 +102,18 @@
           <div class="list-header">
             <h2>Leads capturados</h2>
             <button id="refresh-btn" class="secondary-btn" type="button">Actualizar</button>
+          </div>
+
+          <div class="toolbar">
+            <input id="search-input" type="search" placeholder="Buscar por nombre, email o empresa" />
+            <select id="status-filter">
+              <option value="all">Todos</option>
+              <option value="New">Nuevos</option>
+              <option value="Contacted">Contactados</option>
+              <option value="Qualified">Calificados</option>
+              <option value="Won">Ganados</option>
+              <option value="Lost">Perdidos</option>
+            </select>
           </div>
 
           <div class="table-wrap">

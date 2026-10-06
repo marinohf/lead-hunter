@@ -1,6 +1,28 @@
+async function loadStats() {
+  try {
+    const response = await fetch("/api/stats");
+    const stats = await response.json();
+
+    document.getElementById("total-count").textContent = stats.total || 0;
+    document.getElementById("new-count").textContent = stats.new || 0;
+    document.getElementById("contacted-count").textContent = stats.contacted || 0;
+    document.getElementById("qualified-count").textContent = stats.qualified || 0;
+    document.getElementById("won-count").textContent = stats.won || 0;
+  } catch (error) {
+    console.error("Failed to load stats:", error);
+  }
+}
+
 async function loadLeads() {
   try {
-    const response = await fetch("/api/leads");
+    const search = document.getElementById("search-input").value.trim();
+    const status = document.getElementById("status-filter").value;
+
+    const query = new URLSearchParams();
+    if (search) query.set("search", search);
+    if (status && status !== "all") query.set("status", status);
+
+    const response = await fetch(`/api/leads?${query.toString()}`);
     const leads = await response.json();
     renderLeads(leads);
   } catch (error) {
@@ -9,7 +31,7 @@ async function loadLeads() {
 }
 
 function statusClass(status) {
-  const normalized = status.toLowerCase().replace(/\s+/g, "-");
+  const normalized = (status || "New").toLowerCase().replace(/\s+/g, "-");
   return `status-${normalized}`;
 }
 
@@ -60,18 +82,26 @@ async function submitLead(event) {
     });
 
     if (!response.ok) {
-      throw new Error("Invalid lead payload");
+      const err = await response.json();
+      throw new Error(err.error || "Invalid lead payload");
     }
 
     form.reset();
+    await loadStats();
     await loadLeads();
   } catch (error) {
     console.error("Failed to save lead:", error);
-    alert("No se pudo guardar el lead. Revisa los datos e intenta nuevamente.");
+    alert(error.message || "No se pudo guardar el lead. Revisa los datos e intenta nuevamente.");
   }
 }
 
 document.getElementById("lead-form").addEventListener("submit", submitLead);
-document.getElementById("refresh-btn").addEventListener("click", loadLeads);
+document.getElementById("refresh-btn").addEventListener("click", async () => {
+  await loadStats();
+  await loadLeads();
+});
+document.getElementById("search-input").addEventListener("input", loadLeads);
+document.getElementById("status-filter").addEventListener("change", loadLeads);
 
+loadStats();
 loadLeads();

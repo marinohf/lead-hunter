@@ -23,6 +23,7 @@ function ensureStorage() {
 function readLeads() {
   ensureStorage();
   const raw = fs.readFileSync(DATA_FILE, "utf8");
+
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -36,19 +37,62 @@ function writeLeads(leads) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(leads, null, 2));
 }
 
+function sanitizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, message: "Lead Hunter is running" });
 });
 
 app.get("/api/leads", (req, res) => {
-  const leads = readLeads();
+  const { status, search } = req.query;
+  let leads = readLeads();
+
+  if (status && status !== "all") {
+    leads = leads.filter((lead) => (lead.status || "New") === status);
+  }
+
+  if (search) {
+    const searchTerm = search.toLowerCase();
+    leads = leads.filter((lead) => {
+      const haystack = [
+        lead.name,
+        lead.email,
+        lead.company,
+        lead.source,
+        lead.notes,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(searchTerm);
+    });
+  }
+
   res.json(leads);
+});
+
+app.get("/api/stats", (req, res) => {
+  const leads = readLeads();
+  const stats = {
+    total: leads.length,
+    new: leads.filter((lead) => (lead.status || "New") === "New").length,
+    contacted: leads.filter((lead) => lead.status === "Contacted").length,
+    qualified: leads.filter((lead) => lead.status === "Qualified").length,
+    won: leads.filter((lead) => lead.status === "Won").length,
+  };
+
+  res.json(stats);
 });
 
 app.post("/api/leads", (req, res) => {
   const { name, email, phone, company, source, notes, status } = req.body;
 
-  if (!name || !email) {
+  const cleanName = sanitizeText(name);
+  const cleanEmail = sanitizeText(email);
+
+  if (!cleanName || !cleanEmail) {
     return res.status(400).json({
       error: "Name and email are required fields.",
     });
@@ -57,13 +101,13 @@ app.post("/api/leads", (req, res) => {
   const leads = readLeads();
   const newLead = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-    name: name.trim(),
-    email: email.trim(),
-    phone: phone ? phone.trim() : "",
-    company: company ? company.trim() : "",
-    source: source || "Website",
-    notes: notes ? notes.trim() : "",
-    status: status || "New",
+    name: cleanName,
+    email: cleanEmail,
+    phone: sanitizeText(phone),
+    company: sanitizeText(company),
+    source: sanitizeText(source) || "Website",
+    notes: sanitizeText(notes),
+    status: sanitizeText(status) || "New",
     createdAt: new Date().toISOString(),
   };
 

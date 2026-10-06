@@ -7,7 +7,8 @@ Lead Hunter is a lightweight lead capture and CRM-style dashboard focused on col
 - Capture new leads from a simple web form
 - Store leads locally in JSON for fast iteration
 - View a list of all captured leads in a clean dashboard
-- Support common lead statuses: New, Contacted, Qualified, Won, and Lost
+- Filter leads by status and search by name, email, or company
+- Surface summary stats for total, new, contacted, qualified, and won leads
 
 ## Tech Stack
 
