@@ -36,7 +36,6 @@ body {
   padding: 40px 20px 60px;
 }
 
-/* Header */
 .topbar {
   display: flex;
   align-items: center;
@@ -65,7 +64,7 @@ body {
   font-weight: 700;
 }
 
-h1, h2 {
+h1, h2, h3 {
   margin: 0;
 }
 
@@ -84,6 +83,11 @@ h2 {
   margin-bottom: 4px;
 }
 
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
@@ -99,7 +103,6 @@ h2 {
   font-weight: 600;
 }
 
-/* Summary Grid */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(140px, 1fr));
@@ -174,11 +177,11 @@ h2 {
 .accent-green { --primary: #22c55e; }
 .accent-emerald { --primary: #10b981; }
 
-/* Layout */
 .layout {
   display: grid;
   grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.5fr);
   gap: 28px;
+  margin-bottom: 28px;
 }
 
 .card {
@@ -224,6 +227,10 @@ h2 {
 
 .two-columns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .form-group {
@@ -317,7 +324,6 @@ button:active {
   border-color: var(--primary-light);
 }
 
-/* Toolbar */
 .toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px 120px;
@@ -343,7 +349,6 @@ button:active {
   padding-left: 40px;
 }
 
-/* Table */
 .table-wrap {
   overflow-x: auto;
   border-radius: 12px;
@@ -380,10 +385,6 @@ tbody tr:hover {
   background: rgba(59, 130, 246, 0.05);
 }
 
-tbody tr:hover td {
-  border-bottom-color: rgba(75, 85, 99, 0.3);
-}
-
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -403,7 +404,6 @@ tbody tr:hover td {
 .status-won { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
 .status-lost { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
 
-/* Actions */
 .actions {
   display: flex;
   gap: 8px;
@@ -439,7 +439,6 @@ tbody tr:hover td {
   text-align: center;
 }
 
-/* Modal */
 .modal {
   position: fixed;
   top: 0;
@@ -536,7 +535,122 @@ tbody tr:hover td {
   font-size: 13px;
 }
 
-/* Responsive */
+.prospecting-card {
+  margin-top: 28px;
+}
+
+.engine-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.engine-tags span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.12);
+  color: var(--primary-light);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.prospecting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 16px;
+}
+
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.result-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.result-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.result-header strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.result-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.score-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.result-meta span {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--primary-light);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.result-notes {
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.approve-btn {
+  width: auto;
+  padding: 10px 14px;
+}
+
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: 1fr;
@@ -572,11 +686,17 @@ tbody tr:hover td {
     padding: 24px;
   }
 
-  .two-columns {
+  .two-columns,
+  .three-columns {
     grid-template-columns: 1fr;
   }
 
   .toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
