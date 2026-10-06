@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lead Hunter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Lead Hunter</p>
+          <h1>Captador de Clientes</h1>
+        </div>
+        <span class="status-badge">Live</span>
+      </header>
+
+      <main class="layout">
+        <section class="card form-card">
+          <h2>Nuevo Lead</h2>
+          <form id="lead-form">
+            <div class="grid two-columns">
+              <label>
+                Nombre
+                <input type="text" id="name" name="name" required />
+              </label>
+              <label>
+                Email
+                <input type="email" id="email" name="email" required />
+              </label>
+            </div>
+
+            <div class="grid two-columns">
+              <label>
+                Teléfono
+                <input type="tel" id="phone" name="phone" />
+              </label>
+              <label>
+                Empresa
+                <input type="text" id="company" name="company" />
+              </label>
+            </div>
+
+            <div class="grid two-columns">
+              <label>
+                Fuente
+                <select id="source" name="source">
+                  <option value="Website">Website</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Cold Call">Cold Call</option>
+                  <option value="Social Media">Social Media</option>
+                </select>
+              </label>
+
+              <label>
+                Estado
+                <select id="status" name="status">
+                  <option value="New">Nuevo</option>
+                  <option value="Contacted">Contactado</option>
+                  <option value="Qualified">Calificado</option>
+                  <option value="Won">Ganado</option>
+                  <option value="Lost">Perdido</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Notas
+              <textarea id="notes" name="notes" rows="4" placeholder="Detalles del lead..."></textarea>
+            </label>
+
+            <button type="submit" class="primary-btn">Guardar lead</button>
+          </form>
+        </section>
+
+        <section class="card list-card">
+          <div class="list-header">
+            <h2>Leads capturados</h2>
+            <button id="refresh-btn" class="secondary-btn" type="button">Actualizar</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Empresa</th>
+                  <th>Fuente</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="lead-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

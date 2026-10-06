@@ -1,0 +1,21 @@
+{
+  "name": "lead-hunter",
+  "version": "1.0.0",
+  "description": "Lead Hunter — Captador de Clientes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "lead",
+    "crm",
+    "customer-capture",
+    "sales"
+  ],
+  "author": "marinohf",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

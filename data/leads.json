@@ -1,0 +1,13 @@
+const path = require("path");
+const fs = require("fs");
+
+const dataDir = path.join(__dirname, "data");
+const filePath = path.join(dataDir, "leads.json");
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+if (!fs.existsSync(filePath)) {
+  fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+}
