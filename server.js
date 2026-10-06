@@ -15,39 +15,60 @@ const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Inicializar almacenamiento con verificación de permisos
 function ensureStorage() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  try {
+    // Crear directorio si no existe
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o755 });
+      console.log(`✅ Data directory created: ${DATA_DIR}`);
+    }
 
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
-  }
+    // Crear archivo de leads si no existe
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
+      console.log(`✅ Leads file created: ${DATA_FILE}`);
+    }
 
-  if (!fs.existsSync(CAMPAIGNS_FILE)) {
-    fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify([], null, 2));
-  }
+    // Crear archivo de campañas si no existe
+    if (!fs.existsSync(CAMPAIGNS_FILE)) {
+      fs.writeFileSync(CAMPAIGNS_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
+      console.log(`✅ Campaigns file created: ${CAMPAIGNS_FILE}`);
+    }
 
-  if (!fs.existsSync(DISCOVERED_FILE)) {
-    fs.writeFileSync(DISCOVERED_FILE, JSON.stringify([], null, 2));
+    // Crear archivo de leads descubiertos si no existe
+    if (!fs.existsSync(DISCOVERED_FILE)) {
+      fs.writeFileSync(DISCOVERED_FILE, JSON.stringify([], null, 2), { mode: 0o644 });
+      console.log(`✅ Discovered leads file created: ${DISCOVERED_FILE}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error ensuring storage:`, error.message);
   }
 }
 
 function readJson(filePath, fallback = []) {
-  ensureStorage();
-  const raw = fs.readFileSync(filePath, "utf8");
-
   try {
+    ensureStorage();
+    if (!fs.existsSync(filePath)) {
+      return fallback;
+    }
+    const raw = fs.readFileSync(filePath, "utf8");
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : fallback;
   } catch (error) {
+    console.error(`❌ Error reading ${filePath}:`, error.message);
     return fallback;
   }
 }
 
 function writeJson(filePath, data) {
-  ensureStorage();
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  try {
+    ensureStorage();
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), { mode: 0o644 });
+    console.log(`✅ Data saved to ${path.basename(filePath)}`);
+  } catch (error) {
+    console.error(`❌ Error writing to ${filePath}:`, error.message);
+  }
 }
 
 function readLeads() {
@@ -374,6 +395,8 @@ async function sendWhatsAppMessage(phone, name, company) {
   }
 }
 
+// Rutas API
+
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, message: "Lead Hunter is running" });
 });
@@ -581,8 +604,12 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Inicializar almacenamiento al arrancar
+ensureStorage();
+
 app.listen(PORT, () => {
-  console.log(`Lead Hunter running on http://localhost:${PORT}`);
+  console.log(`\n🎯 Lead Hunter running on http://localhost:${PORT}\n`);
+  console.log(`📁 Data directory: ${DATA_DIR}\n`);
 });
 
 module.exports = app;
